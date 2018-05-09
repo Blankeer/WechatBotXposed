@@ -1,0 +1,58 @@
+apply plugin: 'com.android.application'
+
+apply plugin: 'kotlin-android'
+
+apply plugin: 'kotlin-android-extensions'
+
+android {
+    compileSdkVersion 27
+    defaultConfig {
+        applicationId "com.blanke.wechatbotxposed"
+        minSdkVersion 19
+        targetSdkVersion 27
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
+    implementation 'com.android.support:appcompat-v7:27.0.2'
+
+    compileOnly 'de.robv.android.xposed:api:53'
+    compileOnly 'de.robv.android.xposed:api:53:sources'
+
+    implementation 'com.github.gh0u1l5:wechat-spellbook:0.0.3'
+    implementation 'com.github.gh0u1l5:wechat-spellbook:0.0.3:sources'
+}
+
+// 每次修改运行后自动让 VXP 中的模块`即时生效` ,需要将 (Debug Configurations) - Before Launch - Gradle aware Make - 修改为 :app:installDebug
+afterEvaluate {
+    installDebug.doLast {
+        updateVirtualXposedAPP.execute()
+        rebootVirtualXposedAPP.execute()
+        launchVirtualXposedAPP.execute()
+    }
+}
+// 更新 VXP 中的 app
+task updateVirtualXposedAPP(type: Exec) {
+    def pkg = android.defaultConfig.applicationId
+    commandLine android.adbExecutable, 'shell', 'am', 'broadcast', '-a', 'io.va.exposed.CMD', '-e', 'cmd', 'update', '-e', 'pkg', pkg
+}
+// 重启 VXP
+task rebootVirtualXposedAPP(type: Exec) {
+    commandLine android.adbExecutable, 'shell', 'am', 'broadcast', '-a', 'io.va.exposed.CMD', '-e', 'cmd', 'reboot'
+}
+// 重启 VXP 微信
+task launchVirtualXposedAPP(type: Exec) {
+    def pkg = 'com.tencent.mm'
+    commandLine android.adbExecutable, 'shell', 'am', 'broadcast', '-a', 'io.va.exposed.CMD', '-e', 'cmd', 'launch', '-e', 'pkg', pkg
+}
